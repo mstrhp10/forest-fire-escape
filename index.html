@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>FOREST FIRE ESCAPE — Grade VIII English Learning Package</title>
+<style>
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#000}
+body{font-family:Arial,sans-serif}
+.home{position:relative;width:100vw;height:100vh;background:#000;display:flex;align-items:center;justify-content:center}
+.art{width:100%;height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none}
+.hit{position:absolute;display:block;border:0;background:transparent;cursor:pointer;padding:0}
+.learn{left:16.8%;top:82.0%;width:26%;height:7.0%}
+.game{left:57.1%;top:82.0%;width:26%;height:7.0%}
+.hit:focus-visible{outline:3px solid #fff;outline-offset:3px;border-radius:12px}
+
+.music{
+ position:absolute;right:22px;top:20px;width:48px;height:48px;border-radius:50%;
+ border:1px solid rgba(255,255,255,.45);background:rgba(0,0,0,.55);
+ color:#fff;font-size:22px;cursor:pointer;backdrop-filter:blur(8px);
+ box-shadow:0 0 18px rgba(255,130,30,.22);z-index:5
+}
+.music:hover{transform:scale(1.06)}
+.music.on{border-color:#ffb52e;box-shadow:0 0 24px rgba(255,120,20,.5)}
+.musicTip{
+ position:absolute;right:80px;top:27px;color:#fff;font-size:12px;
+ letter-spacing:.5px;opacity:.75;pointer-events:none;z-index:5
+}
+@media(max-width:700px){
+ .music{right:12px;top:12px}
+ .musicTip{display:none}
+}
+</style>
+</head>
+<body>
+<main class="home" aria-label="Forest Fire Escape English Learning Package">
+  <img class="art" src="homescreen.png" alt="Forest Fire Escape Grade VIII English Learning Package">
+
+  <button id="musicBtn" class="music" aria-label="Play background music" title="Background Music">♫</button>
+  <span id="musicTip" class="musicTip">CINEMATIC MUSIC</span>
+
+  <a class="hit learn" href="learning/simple-past.html" aria-label="Start Learning"></a>
+  <a class="hit game" href="game/forest-fire-escape.html" aria-label="Start Game"></a>
+</main>
+
+<script>
+/* Original procedural cinematic loop.
+   No external audio file or copyrighted recording is used. */
+let ctx=null, master=null, timer=null, step=0, playing=false;
+
+const notes = [146.83,174.61,196.00,220.00,261.63,293.66,329.63];
+const melody = [293.66,329.63,392.00,329.63,293.66,261.63,293.66,220.00];
+
+function tone(freq, start, dur, type="sine", gain=.035){
+  const o=ctx.createOscillator(), g=ctx.createGain();
+  o.type=type; o.frequency.setValueAtTime(freq,start);
+  g.gain.setValueAtTime(0,start);
+  g.gain.linearRampToValueAtTime(gain,start+.08);
+  g.gain.exponentialRampToValueAtTime(.0001,start+dur);
+  o.connect(g).connect(master); o.start(start); o.stop(start+dur+.03);
+}
+
+function pad(freq,start,dur){
+  const o=ctx.createOscillator(), g=ctx.createGain(), f=ctx.createBiquadFilter();
+  o.type="triangle"; o.frequency.value=freq;
+  f.type="lowpass"; f.frequency.value=900;
+  g.gain.setValueAtTime(.0001,start);
+  g.gain.linearRampToValueAtTime(.018,start+1);
+  g.gain.linearRampToValueAtTime(.0001,start+dur);
+  o.connect(f).connect(g).connect(master); o.start(start); o.stop(start+dur+.1);
+}
+
+function schedule(){
+  if(!playing) return;
+  const now=ctx.currentTime;
+  const base=now+.05;
+  const chords=[[146.83,220,293.66],[130.81,196,261.63],[164.81,246.94,329.63],[146.83,220,329.63]];
+  for(let i=0;i<4;i++){
+    const t=base+i*1.8;
+    chords[i].forEach(f=>pad(f,t,1.9));
+  }
+  melody.forEach((f,i)=>tone(f,base+i*.45,.38,"sine",.028));
+  // subtle "embers" / pulse
+  for(let i=0;i<8;i++) tone(notes[(step+i)%notes.length],base+i*.9,.12,"sine",.008);
+  step++;
+  timer=setTimeout(schedule,7200);
+}
+
+function startMusic(){
+  if(!ctx) ctx=new (window.AudioContext||window.webkitAudioContext)();
+  if(ctx.state==="suspended") ctx.resume();
+  if(!master){
+    master=ctx.createGain(); master.gain.value=.72; master.connect(ctx.destination);
+  }
+  if(playing) return;
+  playing=true;
+  schedule();
+  musicBtn.classList.add("on");
+  musicBtn.textContent="🔊";
+  musicBtn.setAttribute("aria-label","Mute background music");
+  musicTip.textContent="MUSIC ON";
+}
+
+function stopMusic(){
+  playing=false;
+  clearTimeout(timer);
+  if(master) master.gain.setTargetAtTime(.0001,ctx.currentTime,.04);
+  setTimeout(()=>{if(master) master.gain.value=.72},180);
+  musicBtn.classList.remove("on");
+  musicBtn.textContent="♫";
+  musicBtn.setAttribute("aria-label","Play background music");
+  musicTip.textContent="CINEMATIC MUSIC";
+}
+
+musicBtn.addEventListener("click",e=>{
+  e.preventDefault(); e.stopPropagation();
+  if(playing) stopMusic(); else startMusic();
+});
+
+// Try autoplay; browsers that block it simply leave the music button available.
+window.addEventListener("load",()=>{ try{startMusic()}catch(e){} });
+</script>
+</body>
+</html>
